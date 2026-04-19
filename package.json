@@ -1,0 +1,32 @@
+{
+  "name": "learn-your-way",
+  "version": "1.0.0",
+  "description": "AI-augmented textbook platform with personalized learning experiences",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && python3 -m compileall .",
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && python3 -m pytest",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && pip3 install -r requirements.txt"
+  },
+  "keywords": [
+    "education",
+    "ai",
+    "learning",
+    "personalization",
+    "textbook",
+    "react",
+    "python"
+  ],
+  "author": "Learn Your Way Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

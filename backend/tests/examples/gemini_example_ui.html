@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compiler Explorer: Lexical Analysis</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e2e;
+            --bg-secondary: #28293d;
+            --text-primary: #e0e0e0;
+            --accent: #7aa2f7;
+            --token-keyword: #bb9af7;
+            --token-type: #7dcfff;
+            --token-identifier: #9ece6a;
+            --token-number: #ff9e64;
+            --token-operator: #89ddff;
+            --success: #4fd69c;
+            --error: #f7768e;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1, h2 { color: var(--accent); }
+        h1 { text-align: center; margin-bottom: 40px; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* The Code Editor styled input */
+        textarea.code-input {
+            width: 100%;
+            height: 300px;
+            background-color: #16161e;
+            color: #c0caf5;
+            border: 2px solid #3b3d5c;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 16px;
+            resize: none;
+            box-sizing: border-box;
+        }
+        textarea.code-input:focus { outline: none; border-color: var(--accent); }
+
+        /* The Token Output Visualization */
+        .token-stream-container {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #16161e;
+            border: 2px solid #3b3d5c;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .token-pill {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 4px;
+            background-color: #32344a;
+            border-radius: 20px;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            border-left: 5px solid #555;
+        }
+
+        /* Token Coloring */
+        .tok-KEYWORD { border-color: var(--token-keyword); color: var(--token-keyword); }
+        .tok-TYPE { border-color: var(--token-type); color: var(--token-type); }
+        .tok-IDENTIFIER { border-color: var(--token-identifier); color: var(--token-identifier); }
+        .tok-NUMBER { border-color: var(--token-number); color: var(--token-number); }
+        .tok-OPERATOR { border-color: var(--token-operator); color: var(--token-operator); }
+
+        .description-block {
+            grid-column: 1 / -1;
+            background-color: rgba(122, 162, 247, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Quiz Section styling */
+        .quiz-section { margin-top: 50px; }
+        .quiz-option {
+            display: block;
+            background: var(--bg-secondary);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 2px solid transparent;
+        }
+        .quiz-option:hover { background: #3b3d5c; }
+        .quiz-option.correct { border-color: var(--success); background: rgba(79, 214, 156, 0.1); }
+        .quiz-option.wrong { border-color: var(--error); background: rgba(247, 118, 142, 0.1); }
+
+    </style>
+</head>
+<body>
+
+    <h1>The Compiler Construction Kit</h1>
+
+    <div class="container">
+        <div class="description-block">
+            <h2>Phase 1: Lexical Analysis (The Scanner)</h2>
+            <p>The compiler's first job is to read the raw input characters of your source code and group them into meaningful chunks called <b>Tokens</b>. It uses Regular Expressions to identify these patterns, ignoring whitespace along the way.</p>
+        </div>
+
+        <div class="card">
+            <h2>1. Source Code Input</h2>
+            <p>Type simple C-style code here (e.g., `int age = 22;`)</p>
+            <textarea id="codeInput" class="code-input" spellcheck="false">int result = (age + 10) * 2;</textarea>
+        </div>
+
+        <div class="card">
+            <h2>2. Generated Token Stream</h2>
+            <p>Visualizing the output as &lt;Type, Value&gt; pairs.</p>
+            <div id="tokenOutput" class="token-stream-container">
+                </div>
+        </div>
+
+    </div>
+
+
+    <script>
+        // --- SIMPLE REGEX TOKENIZER ENGINE ---
+
+        // Define standard regex patterns for a C-like mini-language
+        const tokenDefinitions = [
+            { type: 'TYPE', regex: /^\b(int|float|char|void)\b/ },
+            { type: 'KEYWORD', regex: /^\b(if|else|return|while)\b/ },
+            { type: 'NUMBER', regex: /^\d+(\.\d+)?\b/ },
+            // Identifiers must start with a letter or underscore
+            { type: 'IDENTIFIER', regex: /^[a-zA-Z_]\w*\b/ },
+            { type: 'OPERATOR', regex: /^[+\-*/=<>!]=?|(&&|\|\|)/ },
+            { type: 'PUNCTUATION', regex: /^[;(),{}[\]]/ },
+            // Whitespace to be skipped
+            { type: 'WHITESPACE', regex: /^\s+/ }
+        ];
+
+        function tokenize(sourceCode) {
+            let tokens = [];
+            let remaining = sourceCode;
+
+            while (remaining.length > 0) {
+                let matchFound = false;
+
+                // Try matching against our definitions in order
+                for (let i = 0; i < tokenDefinitions.length; i++) {
+                    let def = tokenDefinitions[i];
+                    let match = remaining.match(def.regex);
+
+                    if (match) {
+                        // We found a token at the start of the string
+                        let value = match[0];
+                        
+                        // Don't add whitespace to the final token list output
+                        if (def.type !== 'WHITESPACE') {
+                            tokens.push({ type: def.type, value: value });
+                        }
+                        
+                        // Advance the string past the matched token
+                        remaining = remaining.slice(value.length);
+                        matchFound = true;
+                        break; // Break the inner loop, start fresh on remaining string
+                    }
+                }
+
+                if (!matchFound) {
+                    // Panic mode: The lexer found an unknown character
+                    tokens.push({ type: 'ERROR', value: remaining[0] });
+                    remaining = remaining.slice(1);
+                }
+            }
+            return tokens;
+        }
+
+        // --- UI UPDATER FUNCTIONS ---
+
+        const codeInput = document.getElementById('codeInput');
+        const tokenOutput = document.getElementById('tokenOutput');
+
+        function renderTokens() {
+            const source = codeInput.value;
+            const tokenStream = tokenize(source);
+            
+            tokenOutput.innerHTML = ''; // Clear previous output
+
+            if(tokenStream.length === 0 && source.trim().length > 0) {
+                 tokenOutput.innerHTML = '<em style="color:#666">Scanning...</em>';
+                 return;
+            }
+
+            // Generate visual "pills" for each token
+            tokenStream.forEach(token => {
+                const pill = document.createElement('span');
+                pill.className = `token-pill tok-${token.type}`;
+                // Visualizing the <Type, Value> pair structure
+                pill.innerHTML = `&lt;<b>${token.type}</b>, "${token.value}"&gt;`;
+                tokenOutput.appendChild(pill);
+            });
+        }
+
+        // Attach the tokenizer to the input text area
+        codeInput.addEventListener('input', renderTokens);
+
+        // Initial render on page load
+        renderTokens();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
+      network: host
+    container_name: maic_ui_backend
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/learn_your_way.db:/app/learn_your_way.db
+    env_file:
+      - .env  # 从主目录读取 .env 文件
+    environment:
+      # 这些配置会覆盖 .env 中的同名变量（如果需要覆盖的话）
+      - DATABASE_URL=sqlite:///./learn_your_way.db
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - MAX_FILE_SIZE=50MB
+      - UPLOAD_DIR=./uploads
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
+      network: host
+    container_name: maic_ui_frontend
+    env_file:
+      - .env  # 从主目录读取 .env 文件（如果需要的话）
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx
+    container_name: maic_ui_nginx
+    ports:
+      - "8927:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./backend/uploads:/app/backend/uploads:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped

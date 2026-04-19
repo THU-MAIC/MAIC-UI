@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compiler Structure Explorer - Interactive Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .phase-box {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .phase-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .flow-arrow {
+            animation: flow 2s infinite;
+        }
+        
+        @keyframes flow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .quiz-option {
+            transition: all 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            transform: translateX(8px);
+        }
+        
+        .correct-answer {
+            background-color: #10b981 !important;
+            color: white !important;
+        }
+        
+        .wrong-answer {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+        
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .syntax-highlight {
+            color: #60a5fa;
+        }
+        
+        .keyword-highlight {
+            color: #f472b6;
+        }
+        
+        .string-highlight {
+            color: #86efac;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-code text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Compiler Structure Explorer</h1>
+                        <p class="text-purple-100 text-sm">Interactive Learning for CS Students</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm bg-white/20 px-3 py-1 rounded-full">
+                        <i class="fas fa-graduation-cap mr-1"></i> Level: Intermediate
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex space-x-1 overflow-x-auto">
+                <button onclick="switchTab('overview')" class="tab-btn px-6 py-3 text-gray-700 hover:text-purple-600 border-b-2 border-transparent hover:border-purple-600 transition-all font-medium whitespace-nowrap" data-tab="overview">
+                    <i class="fas fa-home mr-2"></i>Overview
+                </button>
+                <button onclick="switchTab('phases')" class="tab-btn px-6 py-3 text-gray-700 hover:text-purple-600 border-b-2 border-transparent hover:border-purple-600 transition-all font-medium whitespace-nowrap" data-tab="phases">
+                    <i class="fas fa-layer-group mr-2"></i>Phases
+                </button>
+                <button onclick="switchTab('examples')" class="tab-btn px-6 py-3 text-gray-700 hover:text-purple-600 border-b-2 border-transparent hover:border-purple-600 transition-all font-medium whitespace-nowrap" data-tab="examples">
+                    <i class="fas fa-code mr-2"></i>Examples
+                </button>
+                <button onclick="switchTab('quiz')" class="tab-btn px-6 py-3 text-gray-700 hover:text-purple-600 border-b-2 border-transparent hover:border-purple-600 transition-all font-medium whitespace-nowrap" data-tab="quiz">
+                    <i class="fas fa-question-circle mr-2"></i>Quiz
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active">
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-microchip text-purple-600 mr-2"></i>What is a Compiler?
+                    </h2>
+                    <p class="text-gray-600 mb-4">
+                        A compiler is a sophisticated software tool that translates source code written in one programming language 
+                        into another language, typically machine code or bytecode that can be executed by a computer.
+                    </p>
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-purple-800 mb-2">Key Functions:</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-purple-600 mt-1 mr-2"></i>
+                                <span>Lexical Analysis - Breaking code into tokens</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-purple-600 mt-1 mr-2"></i>
+                                <span>Syntax Analysis - Building parse trees</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-purple-600 mt-1 mr-2"></i>
+                                <span>Semantic Analysis - Type checking</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle text-purple-600 mt-1 mr-2"></i>
+                                <span>Code Generation - Producing executable code</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-project-diagram text-purple-600 mr-2"></i>Compiler Architecture
+                    </h2>
+                    <div class="relative">
+                        <svg viewBox="0 0 400 500" class="w-full h-auto">
+                            <!-- Source Code -->
+                            <rect x="100" y="20" width="200" height="40" fill="#ddd6fe" stroke="#7c3aed" stroke-width="2" rx="5"/>
+                            <text x="200" y="45" text-anchor="middle" fill="#4c1d95" font-weight="600">Source Code</text>
+                            
+                            <!-- Arrow -->
+                            <path d="M 200 60 L 200 90" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrowhead)" class="flow-arrow"/>
+                            
+                            <!-- Front End -->
+                            <rect x="50" y="90" width="120" height="80" fill="#fce7f3" stroke="#ec4899" stroke-width="2" rx="5"/>
+                            <text x="110" y="115" text-anchor="middle" fill="#831843" font-weight="600">Front End</text>
+                            <text x="110" y="135" text-anchor="middle" fill="#831843" font-size="12">Lexical</text>
+                            <text x="110" y="150" text-anchor="middle" fill="#831843" font-size="12">Syntax</text>
+                            <text x="110" y="165" text-anchor="middle" fill="#831843" font-size="12">Semantic</text>
+                            
+                            <!-- Middle End -->
+                            <rect x="230" y="90" width="120" height="80" fill="#e0e7ff" stroke="#6366f1" stroke-width="2" rx="5"/>
+                            <text x="290" y="115" text-anchor="middle" fill="#312e81" font-weight="600">Middle End</text>
+                            <text x="290" y="135" text-anchor="middle" fill="#312e81" font-size="12">Optimization</text>
+                            <text x="290" y="150" text-anchor="middle" fill="#312e81" font-size="12">Analysis</text>
+                            <text x="290" y="165" text-anchor="middle" fill="#312e81" font-size="12">Transform</text>
+                            
+                            <!-- Arrows -->
+                            <path d="M 170 130 L 230 130" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrowhead)" class="flow-arrow"/>
+                            <path d="M 110 170 L 110 200" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrowhead)" class="flow-arrow"/>
+                            <path d="M 290 170 L 290 200" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrowhead)" class="flow-arrow"/>
+                            
+                            <!-- Back End -->
+                            <rect x="140" y="200" width="120" height="80" fill="#dcfce7" stroke="#22c55e" stroke-width="2" rx="5"/>
+                            <text x="200" y="225" text-anchor="middle" fill="#14532d" font-weight="600">Back End</text>
+                            <text x="200" y="245" text-anchor="middle" fill="#14532d" font-size="12">Code</text>
+                            <text x="200" y="260" text-anchor="middle" fill="#14532d" font-size="12">Generation</text>
+                            
+                            <!-- Arrow -->
+                            <path d="M 200 280 L 200 310" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrowhead)" class="flow-arrow"/>
+                            
+                            <!-- Target Code -->
+                            <rect x="100" y="310" width="200" height="40" fill="#fed7aa" stroke="#ea580c" stroke-width="2" rx="5"/>
+                            <text x="200" y="335" text-anchor="middle" fill="#7c2d12" font-weight="600">Target Code</text>
+                            
+                            <!-- Arrow marker -->
+                            <defs>
+                                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                                    <polygon points="0 0, 10 3, 0 6" fill="#7c3aed"/>
+                                </marker>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Flow Diagram -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-sitemap text-purple-600 mr-2"></i>Compilation Process Flow
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('lexical')">
+                        <i class="fas fa-file-alt text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">Lexical</h3>
+                        <p class="text-xs text-gray-600 mt-1">Tokenization</p>
+                    </div>
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('syntax')">
+                        <i class="fas fa-code-branch text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">Syntax</h3>
+                        <p class="text-xs text-gray-600 mt-1">Parsing</p>
+                    </div>
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('semantic')">
+                        <i class="fas fa-check-double text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">Semantic</h3>
+                        <p class="text-xs text-gray-600 mt-1">Type Check</p>
+                    </div>
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('intermediate')">
+                        <i class="fas fa-exchange-alt text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">IR</h3>
+                        <p class="text-xs text-gray-600 mt-1">Generation</p>
+                    </div>
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('optimization')">
+                        <i class="fas fa-tachometer-alt text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">Optimization</h3>
+                        <p class="text-xs text-gray-600 mt-1">Improve</p>
+                    </div>
+                    <div class="phase-box rounded-lg p-4 text-center cursor-pointer" onclick="showPhaseDetail('codegen')">
+                        <i class="fas fa-microchip text-3xl text-purple-600 mb-2"></i>
+                        <h3 class="font-semibold text-gray-800">Code Gen</h3>
+                        <p class="text-xs text-gray-600 mt-1">Target</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phases Tab -->
+        <div id="phases" class="tab-content">
+            <div class="space-y-6">
+                <!-- Lexical Analysis -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-file-alt text-purple-600 mr-2"></i>1. Lexical Analysis
+                            </h2>
+                            <p class="text-gray-600 mt-1">The first phase of compilation</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 1</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">What it does:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Scans the source code character by character</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Groups characters into meaningful units called tokens</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Removes whitespace and comments</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Builds a symbol table for identifiers</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Example:</h3>
+                            <div class="code-block rounded-lg p-4 text-sm">
+                                <div class="mb-2 text-gray-400">// Input:</div>
+                                <div><span class="keyword-highlight">int</span> <span class="syntax-highlight">x</span> = <span class="string-highlight">42</span>;</div>
+                                <div class="mt-4 text-gray-400">// Tokens:</div>
+                                <div>INT, IDENTIFIER(x), ASSIGN, NUMBER(42), SEMICOLON</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Syntax Analysis -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-code-branch text-purple-600 mr-2"></i>2. Syntax Analysis
+                            </h2>
+                            <p class="text-gray-600 mt-1">Parsing the token stream</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 2</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">What it does:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Validates the syntax of the token sequence</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Creates a parse tree or abstract syntax tree (AST)</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Reports syntax errors with meaningful messages</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Uses grammar rules (often CFG) for validation</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Parse Tree Example:</h3>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <pre class="text-sm">
+    Assignment
+       /        \
+  Identifier   Expression
+      |            /     \
+      x        Number    =
+                |
+               42</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Semantic Analysis -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-check-double text-purple-600 mr-2"></i>3. Semantic Analysis
+                            </h2>
+                            <p class="text-gray-600 mt-1">Checking meaning and correctness</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 3</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">What it does:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Performs type checking</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Checks for undeclared variables</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Verifies array bounds and function signatures</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Annotates AST with type information</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Type Checking Example:</h3>
+                            <div class="code-block rounded-lg p-4 text-sm">
+                                <div class="mb-2 text-gray-400">// Code:</div>
+                                <div><span class="keyword-highlight">int</span> <span class="syntax-highlight">a</span> = <span class="string-highlight">10</span>;</div>
+                                <div><span class="keyword-highlight">string</span> <span class="syntax-highlight">b</span> = <span class="string-highlight">"hello"</span>;</div>
+                                <div><span class="syntax-highlight">a</span> = <span class="syntax-highlight">b</span>; <span class="text-red-400">// Error: Type mismatch!</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Intermediate Code Generation -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-exchange-alt text-purple-600 mr-2"></i>4. Intermediate Code Generation
+                            </h2>
+                            <p class="text-gray-600 mt-1">Creating machine-independent code</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 4</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">What it does:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Converts AST to intermediate representation</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Uses three-address code or byte code</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Makes optimization easier</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Enables portability across architectures</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Three-Address Code:</h3>
+                            <div class="code-block rounded-lg p-4 text-sm">
+                                <div class="mb-2 text-gray-400">// Input: a = b + c * d</div>
+                                <div class="text-green-400">t1 = c * d</div>
+                                <div class="text-green-400">t2 = b + t1</div>
+                                <div class="text-green-400">a = t2</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Optimization -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-tachometer-alt text-purple-600 mr-2"></i>5. Code Optimization
+                            </h2>
+                            <p class="text-gray-600 mt-1">Improving code efficiency</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 5</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Optimization Techniques:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Constant folding and propagation</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Dead code elimination</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Loop optimization</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Common subexpression elimination</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Optimization Example:</h3>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="bg-red-50 p-2 rounded">
+                                    <div class="font-semibold text-red-800 mb-1">Before:</div>
+                                    <div class="code-block text-xs p-2">x = 2 * 3</div>
+                                    <div class="code-block text-xs p-2">y = x + 4</div>
+                                </div>
+                                <div class="bg-green-50 p-2 rounded">
+                                    <div class="font-semibold text-green-800 mb-1">After:</div>
+                                    <div class="code-block text-xs p-2">x = 6</div>
+                                    <div class="code-block text-xs p-2">y = 10</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Generation -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">
+                                <i class="fas fa-microchip text-purple-600 mr-2"></i>6. Code Generation
+                            </h2>
+                            <p class="text-gray-600 mt-1">Final translation to target code</p>
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">Phase 6</span>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">What it does:</h3>
+                            <ul class="space-y-2 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Maps IR to target machine language</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Allocates registers and memory</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Selects appropriate machine instructions</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-arrow-right text-purple-500 mt-1 mr-2"></i>
+                                    <span>Generates relocatable or absolute code</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-semibold text-gray-800 mb-3">Assembly Output:</h3>
+                            <div class="code-block rounded-lg p-4 text-xs">
+                                <div class="text-gray-400">// C: int x = 42;</div>
+                                <div class="text-green-400">MOV EAX, 42</div>
+                                <div class="text-green-400">MOV [x], EAX</div>
+                                <div class="mt-2 text-gray-400">// C: return x;</div>
+                                <div class="text-green-400">MOV EAX, [x]</div>
+                                <div class="text-green-400">RET</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples Tab -->
+        <div id="examples" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-code text-purple-600 mr-2"></i>Complete Compilation Example
+                </h2>
+                
+                <div class="space-y-6">
+                    <!-- Input Code -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">Input Source Code (C)</h3>
+                        <div class="code-block rounded-lg p-4">
+                            <pre><span class="keyword-highlight">int</span> <span class="syntax-highlight">factorial</span>(<span class="keyword-highlight">int</span> <span class="syntax-highlight">n</span>) {
+    <span class="keyword-highlight">if</span> (<span class="syntax-highlight">n</span> <= <span class="string-highlight">1</span>) {
+        <span class="keyword-highlight">return</span> <span class="string-highlight">1</span>;
+    }
+    <span class="keyword-highlight">return</span> <span class="syntax-highlight">n</span> * <span class="syntax-highlight">factorial</span>(<span class="syntax-highlight">n</span> - <span class="string-highlight">1</span>);
+}</pre>
+                        </div>
+                    </div>
+
+                    <!-- Lexical Analysis -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">1. Lexical Analysis Output</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                                <div class="bg-white p-2 rounded border">INT</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(factorial)</div>
+                                <div class="bg-white p-2 rounded border">LPAREN</div>
+                                <div class="bg-white p-2 rounded border">INT</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(n)</div>
+                                <div class="bg-white p-2 rounded border">RPAREN</div>
+                                <div class="bg-white p-2 rounded border">LBRACE</div>
+                                <div class="bg-white p-2 rounded border">IF</div>
+                                <div class="bg-white p-2 rounded border">LPAREN</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(n)</div>
+                                <div class="bg-white p-2 rounded border">LTE</div>
+                                <div class="bg-white p-2 rounded border">NUMBER(1)</div>
+                                <div class="bg-white p-2 rounded border">RPAREN</div>
+                                <div class="bg-white p-2 rounded border">LBRACE</div>
+                                <div class="bg-white p-2 rounded border">RETURN</div>
+                                <div class="bg-white p-2 rounded border">NUMBER(1)</div>
+                                <div class="bg-white p-2 rounded border">SEMICOLON</div>
+                                <div class="bg-white p-2 rounded border">RBRACE</div>
+                                <div class="bg-white p-2 rounded border">RETURN</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(n)</div>
+                                <div class="bg-white p-2 rounded border">MULTIPLY</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(factorial)</div>
+                                <div class="bg-white p-2 rounded border">LPAREN</div>
+                                <div class="bg-white p-2 rounded border">IDENTIFIER(n)</div>
+                                <div class="bg-white p-2 rounded border">MINUS</div>
+                                <div class="bg-white p-2 rounded border">NUMBER(1)</div>
+                                <div class="bg-white p-2 rounded border">RPAREN</div>
+                                <div class="bg-white p-2 rounded border">SEMICOLON</div>
+                                <div class="bg-white p-2 rounded border">RBRACE</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AST Visualization -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">2. Abstract Syntax Tree (Simplified)</h3>
+                        <div class="bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                            <svg viewBox="0 0 800 400" class="w-full h-auto">
+                                <!-- Function Node -->
+                                <rect x="350" y="20" width="100" height="40" fill="#ddd6fe" stroke="#7c3aed" stroke-width="2" rx="5"/>
+                                <text x="400" y="45" text-anchor="middle" fill="#4c1d95" font-weight="600">Function</text>
+                                
+                                <!-- Name -->
+                                <rect x="350" y="80" width="100" height="30" fill="#fce7f3" stroke="#ec4899" stroke-width="1" rx="3"/>
+                                <text x="400" y="100" text-anchor="middle" fill="#831843" font-size="12">factorial</text>
+                                
+                                <!-- Params -->
+                                <rect x="250" y="140" width="80" height="30" fill="#e0e7ff" stroke="#6366f1" stroke-width="1" rx="3"/>
+                                <text x="290" y="160" text-anchor="middle" fill="#312e81" font-size="12">param: n</text>
+                                
+                                <!-- Body -->
+                                <rect x="470" y="140" width="80" height="30" fill="#dcfce7" stroke="#22c55e" stroke-width="1" rx="3"/>
+                                <text x="510" y="160" text-anchor="middle" fill="#14532d" font-size="12">body</text>
+                                
+                                <!-- If Statement -->
+                                <rect x="470" y="200" width="80" height="30" fill="#fef3c7" stroke="#f59e0b" stroke-width="1" rx="3"/>
+                                <text x="510" y="220" text-anchor="middle" fill="#78350f" font-size="12">if</text>
+                                
+                                <!-- Condition -->
+                                <rect x="380" y="260" width="80" height="30" fill="#fee2e2" stroke="#ef4444" stroke-width="1" rx="3"/>
+                                <text x="420" y="280" text-anchor="middle" fill="#7f1d1d" font-size="12">n <= 1</text>
+                                
+                                <!-- Then Branch -->
+                                <rect x="480" y="260" width="80" height="30" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="1" rx="3"/>
+                                <text x="520" y="280" text-anchor="middle" fill="#075985" font-size="12">return 1</text>
+                                
+                                <!-- Else Branch -->
+                                <rect x="580" y="260" width="120" height="30" fill="#f3e8ff" stroke="#a855f7" stroke-width="1" rx="3"/>
+                                <text x="640" y="280" text-anchor="middle" fill="#581c87" font-size="12">return n * fact(n-1)</text>
+                                
+                                <!-- Connections -->
+                                <line x1="400" y1="60" x2="400" y2="80" stroke="#7c3aed" stroke-width="2"/>
+                                <line x1="400" y1="110" x2="290" y2="140" stroke="#7c3aed" stroke-width="1"/>
+                                <line x1="400" y1="110" x2="510" y2="140" stroke="#7c3aed" stroke-width="1"/>
+                                <line x1="510" y1="170" x2="510" y2="200" stroke="#7c3aed" stroke-width="1"/>
+                                <line x1="510" y1="230" x2="420" y2="260" stroke="#7c3aed" stroke-width="1"/>
+                                <line x1="510" y1="230" x2="520" y2="260" stroke="#7c3aed" stroke-width="1"/>
+                                <line x1="510" y1="230" x2="640" y2="260" stroke="#7c3aed" stroke-width="1"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Three-Address Code -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">3. Three-Address Code</h3>
+                        <div class="code-block rounded-lg p-4">
+                            <pre><span class="text-gray-400">// Function entry</span>
+<span class="text-green-400">param n</span>
+<span class="text-green-400">if n <= 1 goto L1</span>
+<span class="text-green-400">t1 = n - 1</span>
+<span class="text-green-400">t2 = call factorial(t1)</span>
+<span class="text-green-400">t3 = n * t2</span>
+<span class="text-green-400">return t3</span>
+<span class="text-green-400">goto L2</span>
+<span class="text-green-400">L1: return 1</span>
+<span class="text-green-400">L2:</span></pre>
+                        </div>
+                    </div>
+
+                    <!-- Optimized Code -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">4. After Optimization</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-red-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-red-800 mb-2">Before Optimization:</h4>
+                                <div class="code-block text-sm p-2">
+                                    <div>t1 = n - 1</div>
+                                    <div>t2 = factorial(t1)</div>
+                                    <div>t3 = n * t2</div>
+                                    <div>return t3</div>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <h4 class="font-semibold text-green-800 mb-2">After Optimization:</h4>
+                                <div class="code-block text-sm p-2">
+                                    <div>if n <= 1 return 1</div>
+                                    <div>return n * factorial(n-1)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assembly Output -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">5. Target Assembly Code (x86)</h3>
+                        <div class="code-block rounded-lg p-4">
+                            <pre><span class="text-gray-400">factorial:</span>
+<span class="text-green-400">    push ebp</span>
+<span class="text-green-400">    mov ebp, esp</span>
+<span class="text-green-400">    mov eax, [ebp+8]    ; Load n</span>
+<span class="text-green-400">    cmp eax, 1</span>
+<span class="text-green-400">    jle .base_case</span>
+<span class="text-green-400">    dec eax             ; n-1</span>
+<span class="text-green-400">    push eax</span>
+<span class="text-green-400">    call factorial</span>
+<span class="text-green-400">    add esp, 4</span>
+<span class="text-green-400">    imul eax, [ebp+8]   ; n * factorial(n-1)</span>
+<span class="text-green-400">    jmp .end</span>
+<span class="text-green-400">.base_case:</span>
+<span class="text-green-400">    mov eax, 1</span>
+<span class="text-green-400">.end:</span>
+<span class="text-green-400">    pop ebp</span>
+<span class="text-green-400">    ret</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Compiler Simulator -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-play-circle text-purple-600 mr-2"></i>Interactive Compiler Simulator
+                </h2>
+                <p class="text-gray-600 mb-4">Enter a simple expression and see how it's compiled:</p>
+                
+                <div class="space-y-4">
+                    <input type="text" id="inputExpression" placeholder="Enter expression (e.g., x = 2 + 3 * 4)" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    
+                    <button onclick="simulateCompilation()" 
+                            class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>Compile
+                    </button>
+                    
+                    <div id="compilationResult" class="hidden space-y-3">
+                        <!-- Results will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Tab -->
+        <div id="quiz" class="tab-content">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-question-circle text-purple-600 mr-2"></i>Test Your Knowledge
+                </h2>
+                
+                <div id="quizContainer" class="space-y-6">
+                    <!-- Quiz questions will be inserted here -->
+                </div>
+                
+                <div class="mt-8 flex justify-between items-center">
+                    <div id="quizScore" class="text-lg font-semibold text-gray-700"></div>
+                    <button onclick="resetQuiz()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-redo mr-2"></i>Reset Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Phase Detail Modal -->
+    <div id="phaseModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-2xl font-bold text-gray-800"></h3>
+                <button onclick="closePhaseModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-purple-600', 'text-purple-600');
+                btn.classList.add('border-transparent', 'text-gray-700');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active state to clicked button
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.classList.remove('border-transparent', 'text-gray-700');
+            activeBtn.classList.add('border-purple-600', 'text-purple-600');
+        }
+
+        // Phase details data
+        const phaseDetails = {
+            lexical: {
+                title: "Lexical Analysis",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Lexical analysis is the first phase of compilation. It reads the source code character by character and converts it into a sequence of tokens.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Key Components:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Scanner: Reads input characters</li>
+                                <li>• Tokenizer: Groups characters into tokens</li>
+                                <li>• Symbol Table: Stores identifiers</li>
+                                <li>• Lexeme: Actual character sequence</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Common Token Types:</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="bg-white p-2 rounded">Keywords (if, while, int)</div>
+                                <div class="bg-white p-2 rounded">Identifiers (variables, functions)</div>
+                                <div class="bg-white p-2 rounded">Literals (numbers, strings)</div>
+                                <div class="bg-white p-2 rounded">Operators (+, -, *, /)</div>
+                                <div class="bg-white p-2 rounded">Delimiters (, ;, {, })</div>
+                                <div class="bg-white p-2 rounded">Comments (//, /* */)</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Fun Fact:</strong> Regular expressions are often used to define token patterns in lexical analysis!
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            syntax: {
+                title: "Syntax Analysis",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Syntax analysis checks if the token stream follows the grammatical rules of the programming language and builds a parse tree.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Parsing Techniques:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Top-down parsing (LL parsers)</li>
+                                <li>• Bottom-up parsing (LR parsers)</li>
+                                <li>• Recursive descent parsing</li>
+                                <li>• Operator precedence parsing</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Parse Tree vs AST:</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <h5 class="font-semibold mb-1">Parse Tree:</h5>
+                                    <ul class="text-gray-600">
+                                        <li>• Complete grammar representation</li>
+                                        <li>• Includes all grammar rules</li>
+                                        <li>• More verbose</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h5 class="font-semibold mb-1">AST:</h5>
+                                    <ul class="text-gray-600">
+                                        <li>• Abstract representation</li>
+                                        <li>• Omits unnecessary details</li>
+                                        <li>• More compact</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Did you know?</strong> Yacc (Yet Another Compiler Compiler) is a popular tool for generating parsers!
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            semantic: {
+                title: "Semantic Analysis",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Semantic analysis ensures that the program makes sense and follows the semantic rules of the language.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Semantic Checks:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Type checking and type conversion</li>
+                                <li>• Variable declaration verification</li>
+                                <li>• Function signature matching</li>
+                                <li>• Array bounds checking</li>
+                                <li>• Scope resolution</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Type System Examples:</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Static Typing:</strong> Types checked at compile-time (C++, Java)
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Dynamic Typing:</strong> Types checked at runtime (Python, JavaScript)
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Strong Typing:</strong> Strict type rules (Python, Java)
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Weak Typing:</strong> Flexible type conversion (C, JavaScript)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Pro Tip:</strong> Good semantic analysis catches many bugs before the program even runs!
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            intermediate: {
+                title: "Intermediate Code Generation",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Intermediate code generation creates a machine-independent representation of the source program.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Benefits of IR:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Machine independence</li>
+                                <li>• Easier optimization</li>
+                                <li>• Retargeting to different architectures</li>
+                                <li>• Simplifies compiler design</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Types of IR:</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Three-Address Code:</strong> x = y op z
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Bytecode:</strong> Stack-based (Java, .NET)
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>SSA Form:</strong> Static Single Assignment
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Control Flow Graph:</strong> Graph representation
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Example:</strong> LLVM IR is a popular intermediate representation used by many compilers!
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            optimization: {
+                title: "Code Optimization",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Code optimization improves the intermediate code to make it run faster or use less memory.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Optimization Levels:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Local optimizations (within basic blocks)</li>
+                                <li>• Global optimizations (across functions)</li>
+                                <li>• Interprocedural optimizations</li>
+                                <li>• Machine-specific optimizations</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Common Techniques:</h4>
+                            <div class="grid grid-cols-2 gap-2 text-sm">
+                                <div class="bg-white p-2 rounded">Dead code elimination</div>
+                                <div class="bg-white p-2 rounded">Constant folding</div>
+                                <div class="bg-white p-2 rounded">Loop unrolling</div>
+                                <div class="bg-white p-2 rounded">Inline expansion</div>
+                                <div class="bg-white p-2 rounded">Strength reduction</div>
+                                <div class="bg-white p-2 rounded">Register allocation</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Trade-off:</strong> More optimization means longer compile time but faster execution!
+                            </p>
+                        </div>
+                    </div>
+                `
+            },
+            codegen: {
+                title: "Code Generation",
+                content: `
+                    <div class="space-y-4">
+                        <p class="text-gray-600">Code generation is the final phase that produces target machine code from optimized intermediate code.</p>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-purple-800 mb-2">Key Tasks:</h4>
+                            <ul class="space-y-1 text-sm text-gray-700">
+                                <li>• Instruction selection</li>
+                                <li>• Register allocation</li>
+                                <li>• Instruction scheduling</li>
+                                <li>• Memory management</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Output Formats:</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Assembly Code:</strong> Human-readable machine instructions
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Object Code:</strong> Machine code with relocation info
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Executable:</strong> Ready-to-run program
+                                </div>
+                                <div class="bg-white p-2 rounded">
+                                    <strong>Bytecode:</strong> For virtual machines
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="text-sm text-yellow-800">
+                                <strong>Challenge:</strong> Code generation must consider CPU architecture, instruction set, and calling conventions!
+                            </p>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // Show phase detail modal
+        function showPhaseDetail(phase) {
+            const modal = document.getElementById('phaseModal');
+            const title = document.getElementById('modalTitle');
+            const content = document.getElementById('modalContent');
+            
+            title.textContent = phaseDetails[phase].title;
+            content.innerHTML = phaseDetails[phase].content;
+            
+            modal.classList.remove('hidden');
+        }
+
+        // Close phase modal
+        function closePhaseModal() {
+            document.getElementById('phaseModal').classList.add('hidden');
+        }
+
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "What is the first phase of a compiler?",
+                options: ["Syntax Analysis", "Lexical Analysis", "Semantic Analysis", "Code Generation"],
+                correct: 1
+            },
+            {
+                question: "Which phase builds the Abstract Syntax Tree (AST)?",
+                options: ["Lexical Analysis", "Code Generation", "Syntax Analysis", "Optimization"],
+                correct: 2
+            },
+            {
+                question: "What does semantic analysis primarily check?",
+                options: ["Spelling errors", "Type correctness", "Memory usage", "Execution speed"],
+                correct: 1
+            },
+            {
+                question: "Three-address code is generated in which phase?",
+                options: ["Lexical Analysis", "Intermediate Code Generation", "Code Optimization", "Code Generation"],
+                correct: 1
+            },
+            {
+                question: "Which optimization technique removes unreachable code?",
+                options: ["Constant folding", "Dead code elimination", "Loop unrolling", "Inline expansion"],
+                correct: 1
+            },
+            {
+                question: "What is the output of the lexical analyzer?",
+                options: ["Machine code", "Parse tree", "Tokens", "Bytecode"],
+                correct: 2
+            },
+            {
+                question: "Which data structure is commonly used in lexical analysis?",
+                options: ["Binary tree", "Hash table", "Symbol table", "Stack"],
+                correct: 2
+            },
+            {
+                question: "What does CFG stand for in compiler design?",
+                options: ["Code Flow Graph", "Context-Free Grammar", "Control Flow Graph", "Compiler Function Generator"],
+                correct: 1
+            },
+            {
+                question: "Which phase is responsible for register allocation?",
+                options: ["Syntax Analysis", "Semantic Analysis", "Code Generation", "Lexical Analysis"],
+                correct: 2
+            },
+            {
+                question: "What is the main purpose of intermediate code?",
+                options: ["To make compilation faster", "To enable machine independence", "To reduce memory usage", "To improve syntax checking"],
+                correct: 1
+            }
+        ];
+
+        let currentQuizAnswers = [];
+        let quizScore = 0;
+
+        // Initialize quiz
+        function initQuiz() {
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = '';
+            currentQuizAnswers = [];
+            quizScore = 0;
+            
+            quizQuestions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'bg-gray-50 rounded-lg p-6';
+                questionDiv.innerHTML = `
+                    <h3 class="font-semibold text-gray-800 mb-4">
+                        <span class="bg-purple-600 text-white px-2 py-1 rounded-full text-sm mr-2">${index + 1}</span>
+                        ${q.question}
+                    </h3>
+                    <div class="space-y-2">
+                        ${q.options.map((option, optIndex) => `
+                            <label class="quiz-option flex items-center p-3 bg-white rounded-lg cursor-pointer hover:bg-purple-50 border border-gray-200">
+                                <input type="radio" name="question${index}" value="${optIndex}" 
+                                       class="mr-3 text-purple-600 focus:ring-purple-500">
+                                <span>${option}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(questionDiv);
+            });
+            
+            // Add submit button
+            const submitBtn = document.createElement('div');
+            submitBtn.className = 'text-center mt-6';
+            submitBtn.innerHTML = `
+                <button onclick="submitQuiz()" class="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors text-lg font-semibold">
+                    <i class="fas fa-check-circle mr-2"></i>Submit Quiz
+                </button>
+            `;
+            container.appendChild(submitBtn);
+        }
+
+        // Submit quiz
+        function submitQuiz() {
+            quizScore = 0;
+            const questions = document.querySelectorAll('#quizContainer > div:not(:last-child)');
+            
+            questions.forEach((questionDiv, index) => {
+                const selected = questionDiv.querySelector(`input[name="question${index}"]:checked`);
+                const options = questionDiv.querySelectorAll('.quiz-option');
+                
+                if (selected) {
+                    const selectedIndex = parseInt(selected.value);
+                    currentQuizAnswers[index] = selectedIndex;
+                    
+                    if (selectedIndex === quizQuestions[index].correct) {
+                        quizScore++;
+                        options[selectedIndex].classList.add('correct-answer');
+                    } else {
+                        options[selectedIndex].classList.add('wrong-answer');
+                        options[quizQuestions[index].correct].classList.add('correct-answer');
+                    }
+                } else {
+                    options[quizQuestions[index].correct].classList.add('correct-answer');
+                }
+                
+                // Disable all options
+                options.forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                });
+            });
+            
+            // Update score display
+            document.getElementById('quizScore').innerHTML = `
+                <span class="text-purple-600">Score: ${quizScore}/${quizQuestions.length}</span>
+                <span class="text-gray-500 ml-2">(${Math.round(quizScore/quizQuestions.length * 100)}%)</span>
+            `;
+            
+            // Hide submit button
+            document.querySelector('#quizContainer > div:last-child').style.display = 'none';
+        }
+
+        // Reset quiz
+        function resetQuiz() {
+            initQuiz();
+            document.getElementById('quizScore').innerHTML = '';
+        }
+
+        // Interactive compiler simulator
+        function simulateCompilation() {
+            const input = document.getElementById('inputExpression').value;
+            if (!input) return;
+            
+            const resultDiv = document.getElementById('compilationResult');
+            resultDiv.classList.remove('hidden');
+            
+            // Simulate lexical analysis
+            const tokens = input.match(/\w+|[+\-*/=();]|\d+/g) || [];
+            
+            // Simulate parsing (simplified)
+            const hasAssignment = input.includes('=');
+            const hasOperators = /[+\-*/]/.test(input);
+            
+            resultDiv.innerHTML = `
+                <div class="bg-purple-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-purple-800 mb-2">1. Lexical Analysis - Tokens:</h4>
+                    <div class="flex flex-wrap gap-2">
+                        ${tokens.map(token => `
+                            <span class="bg-white px-3 py-1 rounded border border-purple-200 text-sm">
+                                ${token}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800 mb-2">2. Syntax Analysis:</h4>
+                    <p class="text-sm text-gray-700">
+                        ${hasAssignment ? '✓ Assignment statement detected' : '✗ No assignment found'}
+                        ${hasOperators ? '<br>✓ Arithmetic operations present' : '<br>✗ No operators found'}
+                    </p>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800 mb-2">3. Three-Address Code:</h4>
+                    <div class="code-block text-sm p-3">
+                        ${generateThreeAddressCode(input)}
+                    </div>
+                </div>
+                
+                <div class="bg-yellow-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-800 mb-2">4. Optimized Code:</h4>
+                    <div class="code-block text-sm p-3">
+                        ${optimizeCode(input)}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Generate simplified three-address code
+        function generateThreeAddressCode(expression) {
+            // This is a very simplified version
+            if (expression.includes('*')) {
+                const parts = expression.split('=');
+                const rightSide = parts[1].trim();
+                const operands = rightSide.split('*').map(s => s.trim());
+                return `t1 = ${operands[0]} * ${operands[1]}\n${parts[0].trim()} = t1`;
+            } else if (expression.includes('+')) {
+                const parts = expression.split('=');
+                const rightSide = parts[1].trim();
+                const operands = rightSide.split('+').map(s => s.trim());
+                return `t1 = ${operands[0]} + ${operands[1]}\n${parts[0].trim()} = t1`;
+            } else {
+                return expression;
+            }
+        }
+
+        // Simplified optimization
+        function optimizeCode(expression) {
+            // Very basic optimization - in reality this would be much more complex
+            return expression; // For demo purposes
+        }
+
+        // Initialize quiz on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initQuiz();
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('phaseModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePhaseModal();
+            }
+        });
+    </script>
+</body>
+</html>

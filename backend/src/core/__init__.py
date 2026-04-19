@@ -1,0 +1,1 @@
+# Core module for database and security functionality

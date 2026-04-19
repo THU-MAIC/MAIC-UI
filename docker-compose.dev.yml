@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Backend Service (开发模式 - 支持热重载)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
+      network: host
+    container_name: lear_your_way_backend_dev
+    volumes:
+      # 挂载源代码实现热重载
+      - ./backend:/app
+      # 保持 uploads 和数据库持久化
+      - ./backend/uploads:/app/uploads
+      - ./backend/learn_your_way.db:/app/learn_your_way.db
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:///./learn_your_way.db
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      - MAX_FILE_SIZE=50MB
+      - UPLOAD_DIR=./uploads
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    # 开发模式：使用 --reload 替代 --workers（两者不兼容）
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--log-level", "debug"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Service - 开发模式
+  frontend-dev:
+    image: node:18-alpine
+    container_name: lear_your_way_frontend_dev
+    working_dir: /app
+    volumes:
+      # 挂载源代码实现热重载
+      - ./frontend:/app
+      # 匿名卷避免 node_modules 冲突（主机 node_modules 不会被覆盖）
+      - /app/node_modules
+      # 匿名卷避免 .next 构建冲突
+      - /app/.next
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      # 开发环境下后端 API 地址
+      - NEXT_PUBLIC_API_URL=http://localhost:8927/api
+      - WATCHPACK_POLLING=true
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (适配开发模式)
+  nginx:
+    image: nginx
+    container_name: lear_your_way_nginx_dev
+    ports:
+      - "8927:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./backend/uploads:/app/backend/uploads:ro
+    depends_on:
+      - frontend-dev
+      - backend
+    restart: unless-stopped
