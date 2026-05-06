@@ -1,3 +1,7 @@
+# News
+
+- We release our paper at arxiv: [MAIC-UI: Making Interactive Courseware with Generative UI](https://arxiv.org/pdf/2604.25806), where a three-month classroom deployment with 53 high school students demonstrates that MAIC-UI fosters learning agency and reduces outcome disparities.
+
 # 🤔Why MAIC-UI?
 
 - Turn abstract knowledge into interactive experiences
@@ -239,17 +243,11 @@ If MAIC-UI is helpful to your research or project, please consider citing this p
 
 
 ```bibtex
-@Article{JCST-2509-16000,
-  title = {From MOOC to MAIC: Reimagine Online Teaching and Learning through LLM-driven Agents},
-  journal = {Journal of Computer Science and Technology},
-  volume = {},
-  number = {},
-  pages = {},
-  year = {2026},
-  issn = {1000-9000(Print) /1860-4749(Online)},
-  doi = {10.1007/s11390-025-6000-0},
-  url = {https://jcst.ict.ac.cn/en/article/doi/10.1007/s11390-025-6000-0},
-  author = {Ji-Fan Yu and Daniel Zhang-Li and Zhe-Yuan Zhang and Yu-Cheng Wang and Hao-Xuan Li and Joy Jia Yin Lim and Zhan-Xin Hao and Shang-Qing Tu and Lu Zhang and Xu-Sheng Dai and Jian-Xiao Jiang and Shen Yang and Fei Qin and Ze-Kun Li and Xin Cong and Bin Xu and Lei Hou and Man-Li Li and Juan-Zi Li and Hui-Qin Liu and Yu Zhang and Zhi-Yuan Liu and Mao-Song Sun}
+@article{tu2026maic,
+  title={MAIC-UI: Making Interactive Courseware with Generative UI},
+  author={Tu, Shangqing and Li, Yanjia and Chen, Keyu and Zhang, Sichen and Yu, Jifan and Zhang-Li, Daniel and Hou, Lei and Li, Juanzi and Zhang, Yu and Liu, Huiqin},
+  journal={arXiv preprint arXiv:2604.25806},
+  year={2026}
 }
 ```
 
